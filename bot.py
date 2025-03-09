@@ -1,25 +1,27 @@
 import os
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Получаем токен из переменной окружения
 TOKEN = os.getenv("TELEGRAM_API_TOKEN")
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("Привет! Я бот, запущенный на Railway 🚀")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Привет! Я бот на Railway 🚀")
 
-def main():
+async def main():
     if not TOKEN:
         print("Ошибка: TELEGRAM_API_TOKEN не найден!")
         return
 
-    updater = Updater(TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", start))
+    # Используем Application вместо Updater
+    application = Application.builder().token(TOKEN).build()
+
+    # Добавляем обработчик команды /start
+    application.add_handler(CommandHandler("start", start))
 
     print("Бот запущен!")
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
