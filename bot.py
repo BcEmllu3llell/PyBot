@@ -24,11 +24,12 @@ async def main():
     # Запускаем бота с использованием уже существующего цикла событий
     await application.run_polling()
 
-# Обертка для вызова асинхронной функции main()
-def start_bot():
-    import asyncio
-    asyncio.run(main())  # Запуск main() в синхронном контексте
-
-# Запуск программы
+# Запускаем бота в существующем цикле событий
 if __name__ == "__main__":
-    start_bot()
+    import asyncio
+
+    # Если цикл событий уже запущен, не запускаем новый
+    try:
+        asyncio.get_event_loop().run_until_complete(main())  # Запускаем main() с текущим циклом событий
+    except RuntimeError:
+        asyncio.run(main())  # Если цикл событий еще не запущен, используем run()
