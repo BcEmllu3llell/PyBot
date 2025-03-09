@@ -13,20 +13,21 @@ async def main():
         print("Ошибка: TELEGRAM_API_TOKEN не найден!")
         return
 
-    # Используем Application вместо Updater
+    # Используем Application для создания экземпляра бота
     application = Application.builder().token(TOKEN).build()
 
     # Добавляем обработчик команды /start
     application.add_handler(CommandHandler("start", start))
 
     print("Бот запущен!")
-    # Запускаем бота
+    
+    # Запускаем бота с использованием уже существующего цикла событий
     await application.run_polling()
 
-# Запуск без asyncio.run() для того, чтобы не нарушать уже существующий цикл событий
+# Запуск программы без создания нового цикла событий
 if __name__ == "__main__":
     import asyncio
-    # Проверяем, если цикл событий уже существует, то используем его
+    # Проверка, если цикл событий уже существует, используем его
     loop = asyncio.get_event_loop()
-    loop.create_task(main())  # Запускаем задачу в текущем цикле
-    loop.run_forever()  # Блокируем выполнение программы, пока бот работает
+    loop.create_task(main())  # Запускаем задачу в текущем цикле событий
+    loop.run_forever()  # Запускаем цикл событий
