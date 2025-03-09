@@ -5,6 +5,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 # Получение токена из переменных окружения
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
+# Отладочное сообщение для проверки токена
+print("TOKEN:", TOKEN)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Привет! Я простой Telegram-бот.')
 
