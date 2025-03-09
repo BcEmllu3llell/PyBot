@@ -1,35 +1,35 @@
 import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import Updater, CommandHandler, CallbackContext
 
-# Получение токена из переменных окружения
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# Получаем токен из окружения
+TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 
-# Отладочное сообщение для проверки токена
-print("TOKEN:", TOKEN)
+# Функция для обработки команды /start
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text('Привет! Я Telegram бот, и я готов работать!')
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text('Привет! Я простой Telegram-бот.')
+# Основная функция для запуска бота
+def main():
+    # Проверяем наличие токена
+    if not TOKEN:
+        print("Ошибка: TELEGRAM_API_TOKEN не найден в окружении.")
+        return
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text('Я могу помочь тебе! Используй /start для начала.')
+    # Создаем updater и dispatcher
+    updater = Updater(TOKEN)
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(update.message.text)
+    # Получаем dispatcher
+    dispatcher = updater.dispatcher
 
-def main() -> None:
-    # Создание приложения
-    application = ApplicationBuilder().token(TOKEN).build()
-
-    # Обработчики команд
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-
-    # Обработчик сообщений (echo)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    # Регистрируем обработчик команды /start
+    dispatcher.add_handler(CommandHandler("start", start))
 
     # Запуск бота
-    application.run_polling()
+    updater.start_polling()
+
+    # Бот работает до остановки
+    updater.idle()
 
 if __name__ == '__main__':
     main()
