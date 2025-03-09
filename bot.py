@@ -1,35 +1,33 @@
 import os
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# Получаем токен из переменной окружения
-TOKEN = os.getenv("TELEGRAM_API_TOKEN")
+# Получение токена из переменных окружения
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Привет! Я бот на Railway 🚀")
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Привет! Я простой Telegram-бот.')
 
-async def main():
-    if not TOKEN:
-        print("Ошибка: TELEGRAM_API_TOKEN не найден!")
-        return
+def help_command(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Я могу помочь тебе! Используй /start для начала.')
 
-    # Используем Application для создания экземпляра бота
-    application = Application.builder().token(TOKEN).build()
+def echo(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(update.message.text)
 
-    # Добавляем обработчик команды /start
-    application.add_handler(CommandHandler("start", start))
+def main() -> None:
+    # Создание updater и dispatcher
+    updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
 
-    print("Бот запущен!")
+    # Обработчики команд
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("help", help_command))
 
-    # Запускаем бота с использованием уже существующего цикла событий
-    await application.run_polling()
+    # Обработчик сообщений (echo)
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-# Запускаем бота в существующем цикле событий
-if __name__ == "__main__":
-    import asyncio
+    # Запуск бота
+    updater.start_polling()
+    updater.idle()
 
-    # Если цикл событий уже запущен, не запускаем новый
-    try:
-        asyncio.get_event_loop().run_until_complete(main())  # Запускаем main() с текущим циклом событий
-    except RuntimeError:
-        asyncio.run(main())  # Если цикл событий еще не запущен, используем run()
+if __name__ == '__main__'
