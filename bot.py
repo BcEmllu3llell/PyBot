@@ -20,8 +20,11 @@ async def main():
     application.add_handler(CommandHandler("start", start))
 
     print("Бот запущен!")
+    # Запускаем бота
     await application.run_polling()
 
+# Если этот скрипт запущен, не используем asyncio.run, а просто вызываем main
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    asyncio.get_event_loop().create_task(main())
+    asyncio.get_event_loop().run_forever()
