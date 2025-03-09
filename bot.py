@@ -20,14 +20,10 @@ async def main():
     application.add_handler(CommandHandler("start", start))
 
     print("Бот запущен!")
-    
+
     # Запускаем бота с использованием уже существующего цикла событий
     await application.run_polling()
 
-# Запуск программы без создания нового цикла событий
+# Запуск программы без использования asyncio.run(), так как цикл событий уже существует
 if __name__ == "__main__":
-    import asyncio
-    # Проверка, если цикл событий уже существует, используем его
-    loop = asyncio.get_event_loop()
-    loop.create_task(main())  # Запускаем задачу в текущем цикле событий
-    loop.run_forever()  # Запускаем цикл событий
+    main()
