@@ -1,6 +1,6 @@
 import os
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Получение токена из переменных окружения
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -24,7 +24,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("help", help_command))
 
     # Обработчик сообщений (echo)
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
     # Запуск бота
     updater.start_polling()
