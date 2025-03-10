@@ -34,30 +34,34 @@ async def list_records(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Функция для обработки команды /add (добавление записи)
 async def add_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # Получаем данные из команды (например, /add корпус квартира ФИО)
+        # Получаем данные из команды (например, /add корпус квартира ФИО год_рождения статья положение)
         args = context.args
-        if len(args) < 3:
-            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО>")
+        if len(args) < 6:
+            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО> <год рождения> <статья> <положение>")
             return
         
         building = args[0]
         apartment = args[1]
-        full_name = " ".join(args[2:])
+        full_name = " ".join(args[2:4])  # Например, если ФИО состоит из двух частей
+        birth_year = int(args[4])  # Преобразуем год рождения в целое число
+        article = args[5]
+        position = args[6] if len(args) > 6 else ""  # Положение может быть опциональным
         
         # Добавляем запись в базу данных
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO records (building, apartment, full_name) VALUES (%s, %s, %s)",
-                       (building, apartment, full_name))
+        cursor.execute("""
+            INSERT INTO records (building, apartment, full_name, birth_year, article, position)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (building, apartment, full_name, birth_year, article, position))
         conn.commit()
         
-        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment})")
+        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment}, Год рождения: {birth_year}, Статья: {article}, Положение: {position})")
         
         cursor.close()
         conn.close()
     except Exception as e:
         await update.message.reply_text(f"Ошибка при добавлении записи: {e}")
-
 # Функция для обработки команды /edit (редактирование записи)
 async def edit_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
