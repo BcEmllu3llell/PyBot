@@ -20,12 +20,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def list_records(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, building, apartment, full_name FROM records")
+    cursor.execute("SELECT id, building, apartment, full_name, birth_year, article, status FROM records")
     records = cursor.fetchall()
     
     response = "Список записей:\n"
     for record in records:
-        response += f"ID: {record[0]}, Корпус: {record[1]}, Квартира: {record[2]}, ФИО: {record[3]}\n"
+        response += f"ID: {record[0]}, Корпус: {record[1]}, Квартира: {record[2]}, ФИО: {record[3]}, Год рождения: {record[4]}, Статья: {record[5]}, Статус: {record[6]}\n"
     
     await update.message.reply_text(response)
     cursor.close()
@@ -34,10 +34,10 @@ async def list_records(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Функция для обработки команды /add (добавление записи)
 async def add_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # Получаем данные из команды (например, /add корпус квартира ФИО год_рождения статья положение)
+        # Получаем данные из команды (например, /add корпус квартира ФИО год_рождения статья статус)
         args = context.args
         if len(args) < 6:
-            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО> <год рождения> <статья> <положение>")
+            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО> <год рождения> <статья> <статус>")
             return
         
         building = args[0]
@@ -45,41 +45,47 @@ async def add_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
         full_name = " ".join(args[2:4])  # Например, если ФИО состоит из двух частей
         birth_year = int(args[4])  # Преобразуем год рождения в целое число
         article = args[5]
-        position = args[6] if len(args) > 6 else ""  # Положение может быть опциональным
+        status = args[6] if len(args) > 6 else ""  # Статус может быть опциональным
         
         # Добавляем запись в базу данных
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO records (building, apartment, full_name, birth_year, article, position)
+            INSERT INTO records (building, apartment, full_name, birth_year, article, status)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """, (building, apartment, full_name, birth_year, article, position))
+        """, (building, apartment, full_name, birth_year, article, status))
         conn.commit()
         
-        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment}, Год рождения: {birth_year}, Статья: {article}, Положение: {position})")
+        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment}, Год рождения: {birth_year}, Статья: {article}, Статус: {status})")
         
         cursor.close()
         conn.close()
     except Exception as e:
         await update.message.reply_text(f"Ошибка при добавлении записи: {e}")
+
 # Функция для обработки команды /edit (редактирование записи)
 async def edit_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # Получаем данные из команды (например, /edit id новый_корпус новый_апартамент)
         args = context.args
         if len(args) < 3:
-            await update.message.reply_text("Использование: /edit <id> <новый корпус> <новая квартира>")
+            await update.message.reply_text("Использование: /edit <id> <новый корпус> <новая квартира> <новый год рождения> <новая статья> <новый статус>")
             return
         
         record_id = args[0]
         new_building = args[1]
         new_apartment = args[2]
+        new_birth_year = int(args[3])
+        new_article = args[4]
+        new_status = args[5]
         
         # Редактируем запись в базе данных
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE records SET building = %s, apartment = %s WHERE id = %s",
-                       (new_building, new_apartment, record_id))
+        cursor.execute("""
+            UPDATE records SET building = %s, apartment = %s, birth_year = %s, article = %s, status = %s
+            WHERE id = %s
+        """, (new_building, new_apartment, new_birth_year, new_article, new_status, record_id))
         conn.commit()
         
         await update.message.reply_text(f"Запись с ID {record_id} обновлена.")
@@ -103,9 +109,10 @@ async def view_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Получаем историю изменений из базы данных
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT h.updated_at, h.changes FROM history h "
-                       "JOIN records r ON h.record_id = r.id WHERE r.full_name = %s ORDER BY h.updated_at DESC", 
-                       (full_name,))
+        cursor.execute("""
+            SELECT h.updated_at, h.changes FROM history h
+            JOIN records r ON h.record_id = r.id WHERE r.full_name = %s ORDER BY h.updated_at DESC
+        """, (full_name,))
         history = cursor.fetchall()
         
         if not history:
