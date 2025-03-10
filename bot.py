@@ -19,42 +19,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Функция для обработки команды /add (добавление записи)
 async def add_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # Получаем данные из команды (например, /add корпус квартира ФИО год рождения статья статус)
+        # Получаем данные из команды (например, /add корпус квартира ФИО год_рождения статус)
         args = context.args
-        if len(args) < 6:
-            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО> <год рождения> <статья> <статус>")
+        if len(args) < 4:
+            await update.message.reply_text("Использование: /add <корпус> <квартира> <ФИО> <год рождения> <статус>")
             return
         
         building = args[0]
         apartment = args[1]
-        full_name = " ".join(args[2:-3])  # ФИО будет из всех аргументов между корпусом и статусом
-        birth_year = int(args[-3])
-        article = args[-2]
-        status = args[-1]
+        full_name = " ".join(args[2:-2])  # Собираем все слова как ФИО
+        birth_year = int(args[-2])  # Год рождения
+        status = args[-1]  # Статус
         
-        # Логируем, что получены данные
-        print(f"Получены данные для добавления записи: корпус={building}, квартира={apartment}, ФИО={full_name}, "
-              f"год рождения={birth_year}, статья={article}, статус={status}")
-
         # Добавляем запись в базу данных
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO records (building, apartment, full_name, birth_year, article, status) 
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (building, apartment, full_name, birth_year, article, status))
+        cursor.execute("INSERT INTO records (building, apartment, full_name, birth_year, status) VALUES (%s, %s, %s, %s, %s)",
+                       (building, apartment, full_name, birth_year, status))
         conn.commit()
         
-        # Подтверждаем добавление записи
-        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment})")
+        await update.message.reply_text(f"Запись добавлена: {full_name} (Корпус: {building}, Квартира: {apartment}, Год рождения: {birth_year}, Статус: {status})")
         
         cursor.close()
         conn.close()
     except Exception as e:
-        # Логируем ошибку
-        print(f"Ошибка при добавлении записи: {e}")
         await update.message.reply_text(f"Ошибка при добавлении записи: {e}")
-
 # Основная функция для запуска бота
 def main():
     # Проверяем наличие токена
