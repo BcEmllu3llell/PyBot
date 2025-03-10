@@ -1,7 +1,7 @@
 import os
 import psycopg2
-from telegram import Bot, Update
-from telegram.ext import CommandHandler, Updater
+from telegram import Update
+from telegram.ext import CommandHandler, Application
 
 # Получение переменной DATABASE_URL из окружения
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -28,7 +28,7 @@ def get_db_connection():
     )
 
 # Команда /add для добавления записи
-def add_record(update: Update, context):
+async def add_record(update: Update, context):
     full_name = " ".join(context.args[:-1])  # Имя до последнего аргумента
     year = context.args[-1]  # Год — последний аргумент
 
@@ -36,7 +36,7 @@ def add_record(update: Update, context):
     try:
         year = int(year)
     except ValueError:
-        update.message.reply_text("Год должен быть числом.")
+        await update.message.reply_text("Год должен быть числом.")
         return
 
     try:
@@ -44,28 +44,27 @@ def add_record(update: Update, context):
         cursor = conn.cursor()
         cursor.execute("INSERT INTO records (full_name, year) VALUES (%s, %s)", (full_name, year))
         conn.commit()
-        update.message.reply_text(f"Запись '{full_name}' за {year} добавлена!")
+        await update.message.reply_text(f"Запись '{full_name}' за {year} добавлена!")
     except psycopg2.Error as err:
-        update.message.reply_text(f"Ошибка при добавлении записи: {err}")
+        await update.message.reply_text(f"Ошибка при добавлении записи: {err}")
     finally:
         cursor.close()
         conn.close()
 
 # Основная функция для запуска бота
-def main():
+async def main():
     # Токен вашего бота
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
     
-    # Создаем Updater и подключаем обработчики
-    updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    # Создаем объект Application
+    application = Application.builder().token(TELEGRAM_TOKEN).build()
     
     # Команда /add
-    dp.add_handler(CommandHandler('add', add_record))
+    application.add_handler(CommandHandler('add', add_record))
 
     # Запуск бота
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+    asyncio.run(main())
